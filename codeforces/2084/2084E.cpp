@@ -3,9 +3,9 @@ using namespace std;
 
 const int M = 1e9 + 7;
 
-int n, m, k;
-vector<int> v;
-long long ans, fac[5004];
+int n, m, k, b[5004], v[5004];
+bool vis[5004];
+long long ans, fac[5004], inv[5004], d[5004][5004];
 
 long long power(int a, long long x) {
 	if (x == 0) {
@@ -20,93 +20,70 @@ long long power(int a, long long x) {
 	}
 }
 
-long long inv(int a) {
-	return power(a, M - 2);
+long long perm(int n, int r) {
+	return fac[n] * inv[n - r] % M;
 }
 
-long long perm(int n, int r) {
-	if (n == 0) {
-		return 0;
-	}
-	
-	return fac[n] * inv(fac[n - r]) % M;
+long long cal(int c1, int c2, int t) {
+	return perm(c1, c2) * fac[t - c2] % M;
 }
 
 void solve() {
 	scanf("%d", &n);
-	v.resize(n);
 	
-	set<int> s;
-	vector<int> s_v;
-	
-	for (int i = 0; i < n; i++) {
-		s.insert(i);
+	for (int i = 0; i <= n; i++) {
+		b[i] = 0;
+		vis[i] = false;
+		for (int j = 0; j <= n; j++) {
+			d[i][j] = 0;
+		}
 	}
 	
 	for (int i = 0; i < n; i++) {
 		scanf("%d", &v[i]);
 		
+		b[i + 1] = b[i] + (v[i] == -1);
+		
 		if (v[i] != -1) {
-			s.erase(v[i]);
+			vis[v[i]] = true;
 		}
 	}
 	
 	ans = 0;
 	
-	int free = s.size();
-	
-	for (auto x: s) {
-		s_v.push_back(x);
+	int l = n;
+	for (int i = 0; i < n; i++) {
+		int r = n;
+		for (int j = n - 1; j >= i; j--) {
+			int neg = b[j + 1] - b[i];
+			int mini = min(l, r);
+			
+			d[neg][0]++;
+			d[neg][mini]--;
+			
+			if (v[j] != -1) {
+				r = min(r, v[j]);
+			}
+		}
+		
+		if (v[i] != -1) {
+			l = min(l, v[i]);
+		}
+	}
+
+	for (int i = 0; i <= b[n]; i++) {
+		for (int j = 1; j <= n; j++) {
+			d[i][j] += d[i][j - 1];
+			d[i][j] %= M;
+		}
 	}
 	
-	for (int i = 0; i < n; i++) {
-		set<int> p = s;
-		set<int> q;
-		
-		for (int j = 0; j <= n; j++) {
-			q.insert(j);
-		}
-		vector<int> temp;
-		
-		int cnt = 0;
-		for (int j = i; j < n; j++) {
-			printf("ind: %d %d\n", i, j);
-			if (v[j] == -1) {
-				temp.push_back(*(p.begin()));
-				q.erase(*(p.begin()));
-				p.erase(p.begin());
-				cnt++;
-			} else {
-				q.erase(v[j]);
-			}
-			
-			for (int k = 1; k <= (*(q.begin())); k++) {
-				int need = upper_bound(temp.begin(), temp.end(), k - 1) - temp.begin();
-				
-				int left = upper_bound(s_v.begin(), s_v.end(), k) - s_v.begin();
-				left = free - left;
-				
-				printf("mex: %d need: %d perm: %d %d %d\n", k, need, left, cnt - need, perm(left, cnt - need));
-				
-				long long sum = 1ll * k * fac[need] % M;
-				
-				if (cnt - need > 0) {
-					sum *= perm(left, cnt - need);
-				}
-				
-				if (left - (cnt - need) < 0) {
-					sum = 0;
-				}
-				
-				sum %= M;
-				
-				ans += sum;
-				ans %= M;
-			}
-			
-//			printf("mex: %d fac: %d\n", *(q.begin()), fac[cnt]);
-//			ans += 1ll * (*(q.begin())) * fac[cnt] % M;
-//			ans %= M;
+	int cnt = 0;
+	for (int j = 0; j < n; j++) {
+		cnt += !vis[j];
+		for (int i = cnt; i <= b[n]; i++) {
+			ans += 1ll * d[i][j] * cal(i, cnt, b[n]) % M;
+			ans %= M;
 		}
 	}
 	
@@ -115,8 +92,10 @@ void solve() {
 
 void init() {
 	fac[0] = 1;
+	inv[0] = 1;
 	for (int i = 1; i <= 5000; i++) {
 		fac[i] = fac[i - 1] * i % M;
+		inv[i] = power(fac[i], M - 2);
 	}
 }
 
