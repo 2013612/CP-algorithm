@@ -1,58 +1,58 @@
 #include<iostream>
-#include<map>
-#include<algorithm>
+#include<atcoder/modint>
 using namespace std;
 
+using mint = atcoder::modint998244353;
+
 int n, k;
-map<string, int> m, v;
+mint a[200006], s[200006][20], ans;
 
-void g(int l, int r, int pow) {
-	if (pow == 0) {
-		for (auto [x, y]: v) {
-			m[x] += y;
-		}
-		
-		return;
+mint choose(int n, int r) {
+	mint a = 1;
+	for (int i = 2; i <= n; i++) {
+		a *= i;
 	}
-	
-	map<string, int> u;
-	
-	for (int i = l; i <= r; i++) {
-		for (auto [x, y]: v) {
-			string t = x;
-			t.push_back('A' + i);
-			sort(t.begin(), t.end());
-			u[t] += y;
-		}
+	mint b = 1;
+	for (int i = 2; i <= r; i++) {
+		b *= i;
 	}
-	
-	v = u;
-	g(l, r, pow - 1);
-}
-
-void f(int len, int pow) {
-//	v[""] = 1;
-//	g(0, 2, 2);
-	for (int i = 0; i < len; i++) {
-		for (int j = i; j < len; j++) {
-			v.clear();
-			v[""] = 1;
-			g(i, j, pow);
-		}
+	for (int i = 2; i <= n - r; i++) {
+		b *= i;
 	}
-	
-	for (auto [x, y]: m) {
-		cout << y << " " << x << endl;
-	}
-	m.clear();
+	return a / b;
 }
 
 int main() {
 	scanf("%d %d", &n, &k);
-	n = 3;
-	k = 2;
-	f(n, k);
+	for (int i = 0; i < n; i++) {
+		scanf("%d", &a[i]);
+		s[i + 1][1] = s[i][1] + a[i];
+		s[i + 1][0] = 1;
+	}
+	s[0][0] = 1;
 	
+	for (int i = 2; i <= k; i++) {
+		for (int j = 1; j <= n; j++) {
+			s[j][i] = s[j][i - 1] * s[j][1];
+		}
+	}
+	
+	for (int i = 0; i <= k; i++) {
+		mint c = choose(k, i);
+		mint sum = 0;
+		for (int j = 1; j <= n; j++) {
+			int neg = 1;
+			if (i & 1) {
+				neg = -1;
+			}
+			
+			sum += neg * s[j - 1][i];
+			
+			ans += c * s[j][k - i] * sum;
+		}
+	}
+	
+	printf("%d\n", ans.val());
 	
 	return 0;
 }
