@@ -10,7 +10,7 @@ struct LCA {
 	vector<int> tin, tout;
 	vector<vector<int>> up;
 	
-	LCA(): n(n), root(root), adj(adj) {
+	LCA(int n, int root, vector<vector<int>> &adj): n(n), root(root), adj(adj) {
 		tin.resize(n);
 	    tout.resize(n);
 	    timer = 0;
